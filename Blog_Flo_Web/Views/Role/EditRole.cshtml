@@ -1,0 +1,28 @@
+﻿@model Blog_Flo_Web.Services_model.ViewModels.Roles.RoleEditViewModel
+@{
+	ViewData["Title"] = "Edit role";
+}
+
+<div class="container-page">
+	<h2 class="title-margin">Редактирование роли</h2>
+	<form method="post" asp-controller="Role" asp-action="EditRole"> <div asp-validation-summary="All" class="text-danger"></div>
+		<div style="margin-bottom: 5px">
+			<label asp-for="Name"></label><br />
+			<input class="form-control" asp-for="Name" />
+			<span asp-validation-for="Name" class="text-danger"></span>
+		</div>
+		<div style="margin-bottom: 5px">
+			<label asp-for="Description"></label><br />
+           
+			<textarea class="form-control" asp-for="Description"></textarea>
+			<span asp-validation-for="Description" class="text-danger"></span>
+			<input class="form-control" asp-for="Id" hidden/>
+		</div>
+		<div>
+			<input class="btn btn-sm btn-primary" type="submit" value="Сохранить"/>
+		</div>
+		<p>
+			<a method="get" asp-controller="Role" asp-action="GetRoles">Все роли </a>
+		</p>
+	</form>
+</div>

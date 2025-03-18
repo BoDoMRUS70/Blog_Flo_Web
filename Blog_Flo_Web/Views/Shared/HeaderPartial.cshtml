@@ -1,0 +1,46 @@
+﻿<header>
+	<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light border-bottom box-shadow mb-3"><!--bg-white-->
+            <div class="container-fluid">
+			<a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Новости Blog_Flo_Web</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+	                <ul class="navbar-nav flex-grow-1">
+		                <li class="nav-item">
+			                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Главная</a>
+		                </li>
+		                <li class="nav-item">
+			                <a class="nav-link text-dark" asp-area="" asp-controller="Post" asp-action="GetPosts">Статьи</a>
+		                </li>
+		                @if (User.IsInRole("Администратор") || User.IsInRole("Модератор"))
+		                {
+			                <li class="nav-item">
+				                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="GetAccounts">Пользователи</a>
+			                </li>
+			                <li class="nav-item">
+				                <a class="nav-link text-dark" asp-area="" asp-controller="Role" asp-action="GetRoles">Роли</a>
+			                </li>
+			                <li class="nav-item">
+				                <a class="nav-link text-dark" asp-area="" asp-controller="Tag" asp-action="GetTags">Теги</a>
+			                </li>
+		                }
+		                
+	                </ul>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+	                    <form method="post" asp-controller="User" asp-action="LogoutAccount">
+		                    <p class="badge bg-success text-white nav-item flex-grow-1" style="line-height: 2; margin-bottom: 0;">@User.Identity.Name</p>
+		                    <input class="btn btn-sm btn-primary nav-item flex-grow-1" style="margin-bottom: 0;" type="submit" value="Выход"/>
+	                    </form>
+                    }
+                    else
+                    {
+	                    <a class="btn btn-sm btn-primary" style="margin: 1em;" asp-controller="User" asp-action="Login">Вход</a>
+	                    <a class="btn btn-sm btn-primary" asp-controller="User" asp-action="Register">Регистрация</a>
+                    }
+                </div>
+            </div>
+        </nav>
+</header>

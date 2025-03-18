@@ -1,0 +1,50 @@
+﻿@model List<Blog_Flo_Web.Business_model.Models.User>
+@{
+	ViewData["Title"] = "Accounts";
+}
+
+@{
+              @if (Model.Count() == 0)
+              {
+	              <h5 class="card-title">Нету данных для отображения</h5>
+	              if (User.IsInRole("Администратор"))
+	              {
+		              <h6 class="card-title"><a method="get" asp-controller="User" asp-action="AddUser">Добавить пользователя</a></h6>
+	              }
+              }
+              else
+              {
+	              if (User.IsInRole("Администратор"))
+	              {
+		              <h6 class="card-title"><a method="get" asp-controller="User" asp-action="AddUser">Добавить пользователя</a></h6>
+	              }
+                  <h5 class="card-title">Все пользователи</h5>
+                  foreach (var user in Model)
+                  {
+                      <div class="card w-75">
+                      <div class="card-body">
+                      <h5 class="card-title">@user.UserName</h5>
+                      <h5>Роли:</h5>
+                      @foreach (var role in user.Roles)
+                      {
+                          <span class="badge rounded-pill text-bg-success" style="color:green">@role.Name</span>
+                      }
+                      <h5>Посты:</h5>
+                      @foreach (var post in user.Posts)
+                      {
+                          <span class="badge rounded-pill text-bg-success" style="color:green"><a method="get" asp-controller="Post" asp-action="ShowPost" asp-route-id="@post.Id">@post.Title</a></span>
+                      }
+                      @if (User.IsInRole("Администратор"))
+                      {
+                        <div>
+                            <a class="btn btn-outline-info button" method="get" asp-controller="User" asp-action="EditAccount" asp-route-id="@user.Id">Редактировать</a>
+                            <a class="btn btn-outline-secondary" method="get" asp-controller="User" asp-action="DetailsAccount" asp-route-id="@user.Id">Просмотреть</a>
+                            <a class="btn btn-outline-danger button" method="post" asp-controller="User" asp-action="RemoveAccount" asp-route-id="@user.Id">Удалить</a>
+                        </div>
+                      }
+                      </div>
+                      </div>
+                      <p></p>
+                  }
+              }
+        }

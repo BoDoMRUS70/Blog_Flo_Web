@@ -1,0 +1,26 @@
+﻿@model Blog_Flo_Web.Services_model.ViewModels.Comments.CommentCreateViewModel
+@{
+	ViewData["Title"] = "Add comment";
+}
+
+<div class="container-page">
+	<h2 class="title-margin">Добавление комментария</h2>
+	<form method="post" asp-controller="Comment" asp-action="CreateComment" asp-route-postId="@Model.PostId"> <div asp-validation-summary="All" class="text-danger"></div>
+		<div style="margin-bottom: 5px">
+			<label asp-for="Content"></label><br/>
+			<input class="form-control" asp-for="Content"/>
+			<span asp-validation-for="Content" class="text-danger"></span>
+		</div>
+		<div style="margin-bottom: 5px">
+			<label asp-for="Author"></label><br />
+			<input class="form-control" asp-for="Author" />
+			<span asp-validation-for="Author" class="text-danger"></span>
+		</div>
+		<div>
+			<input class="btn btn-sm btn-primary" type="submit" value="Создать" />
+		</div>
+		<p>
+			<a method="get" asp-controller="Post" asp-action="GetPosts">Все статьи </a>
+		</p>
+	</form>
+</div>

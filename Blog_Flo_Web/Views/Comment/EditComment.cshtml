@@ -1,0 +1,27 @@
+﻿@model Blog_Flo_Web.Services_model.ViewModels.Comments.CommentEditViewModel
+@{
+	ViewData["Title"] = "Edit comment";
+}
+
+<div class="container-page">
+	<h2 class="title-margin">Редактирование комментария</h2>
+	<form method="post" asp-controller="Comment" asp-action="EditComment"> <div asp-validation-summary="All" class="text-danger"></div>
+		<div style="margin-bottom: 5px">
+			<label asp-for="Content"></label><br />
+			<input class="form-control" asp-for="Content" />
+			<span asp-validation-for="Content" class="text-danger"></span>
+		</div>
+		<div style="margin-bottom: 5px">
+			<label asp-for="Author"></label><br />
+			<input class="form-control" asp-for="Author" />
+			<span asp-validation-for="Author" class="text-danger"></span>
+		</div>
+		<div>
+			<input class="btn btn-sm btn-primary" type="submit" value="Сохранить"/>
+			<a asp-controller="Comment" asp-action="RemoveComment" asp-route-id="@Model.Id" class="btn btn-sm btn-danger">Удалить комментарий</a>
+		</div>
+		<p>
+			<a method="get" asp-controller="Post" asp-action="GetPosts">Все статьи</a>
+		</p>
+	</form>
+</div>

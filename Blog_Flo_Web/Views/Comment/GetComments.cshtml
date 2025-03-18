@@ -1,0 +1,43 @@
+﻿@model List<Blog_Flo_Web.Business_model.Models.Comment>
+@{
+	ViewData["Title"] = "All Comments";
+}
+
+
+<div class="container-page">
+	<h2 class="title-margin">Все комментарии</h2>
+	@if (Model.Count > 0)
+	{
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Автор</th>
+					<th>Комментарий</th>
+					<th>Дата добавления</th>
+					<th>Действия</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var comment in Model)
+				{
+					<tr>
+						<td>@(comment.User != null ? comment.User.UserName : comment.AuthorName)</td>
+						<td>@comment.Content</td>
+						<td>@comment.DateAdd.ToString("yyyy-MM-dd HH:mm")</td>
+						<td>
+							<a asp-controller="Comment" asp-action="EditComment" asp-route-id="@comment.Id" class="btn btn-sm btn-primary">Редактировать</a>
+							<a asp-controller="Comment" asp-action="RemoveComment" asp-route-id="@comment.Id" class="btn btn-sm btn-danger">Удалить</a>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+	else
+	{
+		<p>Нет комментариев для отображения.</p>
+	}
+	<p>
+		<a method="get" asp-controller="Post" asp-action="GetPosts">Все статьи</a>
+	</p>
+</div>

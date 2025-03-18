@@ -1,0 +1,26 @@
+﻿@model Blog_Flo_Web.Services_model.ViewModels.Roles.RoleCreateViewModel
+@{
+	ViewData["Title"] = "Create role";
+}
+
+<div class="container-page">
+	<h2 class="title-margin">Добавление роли</h2>
+	<form method="post" asp-controller="Role" asp-action="CreateRole"> <div asp-validation-summary="All" class="text-danger"></div>
+		<div style="margin-bottom: 5px">
+			<label asp-for="Name"></label><br />
+			<input class="form-control" asp-for="Name" />
+			<span asp-validation-for="Name" class="text-danger"></span>
+		</div>
+		<div style="margin-bottom: 5px">
+			<label asp-for="Description"></label><br />
+			<textarea class="form-control" asp-for="Description"></textarea>
+			<span asp-validation-for="Description" class="text-danger"></span>
+		</div>
+		<div>
+			<input class="btn btn-sm btn-primary" type="submit" value="Создать" />
+		</div>
+		<p>
+			<a method="get" asp-controller="Role" asp-action="GetRoles">Все роли</a>
+		</p>
+	</form>
+</div>

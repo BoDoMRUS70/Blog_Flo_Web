@@ -1,0 +1,47 @@
+﻿@model Blog_Flo_Web.Services_model.ViewModels.Users.UserCreateViewModel
+@{
+	ViewData["Title"] = "Add user";
+}
+
+<div class="container-page">
+	<h2 class="title-margin">Добавление пользователя</h2>
+	<form method="post" asp-controller="User" asp-action="AddUser"> <div asp-validation-summary="All" class="text-danger"></div>
+		<div style="margin-bottom: 5px">
+           
+			<div style="margin-bottom: 5px">
+				<label asp-for="FirstName"></label><br />
+				<input class="form-control" asp-for="FirstName" />
+				<span asp-validation-for="FirstName" class="text-danger"></span>
+            
+			</div>
+			<div style="margin-bottom: 5px">
+				<label asp-for="LastName"></label><br />
+				<input class="form-control" asp-for="LastName" />
+				<span asp-validation-for="LastName" class="text-danger"></span>
+            
+			</div>
+			<div style="margin-bottom: 5px">
+				<label asp-for="UserName"></label><br />
+				<input class="form-control" asp-for="UserName" />
+				<span asp-validation-for="UserName" class="text-danger"></span>
+            
+			</div>
+			<div style="margin-bottom: 5px">
+				<label asp-for="Email"></label><br />
+				<input class="form-control" asp-for="Email" />
+				<span asp-validation-for="Email" class="text-danger"></span>
+           
+			</div>
+			<div>
+				<label asp-for="Password">Пароль</label><br />
+				<input class="form-control" asp-for="Password" />
+				<span asp-validation-for="Password" class="text-danger"></span>
+			</div>
+			<div>
+				<input class="btn btn-sm btn-primary" type="submit" value="Сохранить"/>
+			</div>
+			<p>
+				<a method="get" asp-controller="User" asp-action="GetAccounts">Все пользователи </a>
+			</p></div>
+	</form>
+</div>

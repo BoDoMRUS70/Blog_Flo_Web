@@ -1,0 +1,47 @@
+﻿@model Blog_Flo_Web.Services_model.ViewModels.Posts.PostEditViewModel
+@{
+	ViewData["Title"] = "Edit post";
+}
+
+<div class="container-page">
+	<h2 class="title-margin">Редактирование статьи</h2>
+	<form method="post" asp-controller="Post" asp-action="EditPost"> <div asp-validation-summary="All" class="text-danger"></div>
+		<div style="margin-bottom: 5px">
+			<table>
+				<label>Теги</label>
+				@if (Model is not null)
+				{
+					@for (int i = 0; i < Model?.Tags?.Count; i++)
+					{
+						if(i % 3 == 0)
+						{
+							@:<tr></tr>
+						}
+						<td>
+							@Html.CheckBoxFor(model => model.Tags[i].IsSelected)
+							<lable class="tag-margin">@Model.Tags[i].Name</lable>
+							@Html.HiddenFor(model => model.Tags[i].Id)
+						</td>
+					}
+				}
+			</table>
+			<div style="margin-bottom: 5px">
+				<label asp-for="Title"></label><br />
+				<input class="form-control" asp-for="Title" />
+				<span asp-validation-for="Title" class="text-danger"></span>
+				<input class="form-control" asp-for="Id" hidden/>
+			</div>
+			<div style="margin-bottom: 5px">
+				<label asp-for="Content"></label><br />
+				<input class="form-control" asp-for="Content" />
+				<span asp-validation-for="Content" class="text-danger"></span>
+				<input class="form-control" asp-for="Id" hidden/>
+			</div>
+			<div>
+				<input class="btn btn-sm btn-primary" type="submit" value="Сохранить"/>
+			</div>
+			<p>
+				<a method="get" asp-controller="Post" asp-action="GetPosts">Выйти без сохранения</a>
+			</p></div>
+	</form>
+</div>
