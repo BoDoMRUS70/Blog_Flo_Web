@@ -3,26 +3,26 @@ using Blog_Flo_Web.Services_model.ViewModels.Posts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using NLog;
 using Blog_Flo_Web.Business_model.Models;
 
 namespace Blog_Flo_Web.Controllers
 {
-	[ApiExplorerSettings(IgnoreApi = true)]
-	public class PostController : Controller
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public class PostController : Controller
     {
         private readonly IPostService _postService;
         private readonly UserManager<User> _userManager;
-		private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        private readonly ILogger<PostController> _logger;
 
-		public PostController(IPostService postService, UserManager<User> userManager)
+        public PostController(IPostService postService, UserManager<User> userManager, ILogger<PostController> logger)
         {
             _postService = postService;
             _userManager = userManager;
+            _logger = logger;
         }
 
         /// <summary>
-        /// [Get] Метод, показывания поста
+        /// [Get] Метод, показа поста
         /// </summary>
         [Route("Post/Show")]
         [HttpGet]
@@ -39,10 +39,9 @@ namespace Blog_Flo_Web.Controllers
         [Route("Post/Create")]
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> CreatePost()
+        public IActionResult CreatePost()
         {
-            var model = await _postService.CreatePost();
-
+            var model = _postService.CreatePost();
             return View(model);
         }
 
@@ -54,19 +53,38 @@ namespace Blog_Flo_Web.Controllers
         [HttpPost]
         public async Task<IActionResult> CreatePost(PostCreateViewModel model)
         {
-            var user = await _userManager.FindByNameAsync(User?.Identity?.Name);
+            // Проверка имени пользователя
+            var userName = User?.Identity?.Name;
+            if (string.IsNullOrEmpty(userName))
+            {
+                _logger.LogWarning("Имя пользователя не найдено");
+                return RedirectToAction("Login", "Account"); // Перенаправление на страницу входа
+            }
+
+            // Поиск пользователя
+            var user = await _userManager.FindByNameAsync(userName);
+            if (user == null)
+            {
+                _logger.LogWarning($"Пользователь с именем {userName} не найден");
+                return NotFound("Пользователь не найден");
+            }
+
+            // Установка автора поста
             model.AuthorId = user.Id;
+
+            // Проверка заполнения обязательных полей
             if (string.IsNullOrEmpty(model.Title) || string.IsNullOrEmpty(model.Content))
             {
                 ModelState.AddModelError("", "Не все поля заполнены");
-				Logger.Error($"Пост не создан, ошибка при создании - Не все поля заполнены");
-
-				return View(model);
+                _logger.LogError("Пост не создан, ошибка при создании - Не все поля заполнены");
+                return View(model);
             }
-            await _postService.CreatePost(model);
-			Logger.Info($"Создан пост - {model.Title}");
 
-			return RedirectToAction("GetPosts", "Post");
+            // Создание поста
+            await _postService.CreatePost(model);
+            _logger.LogInformation($"Создан пост - {model.Title}");
+
+            return RedirectToAction("GetPosts", "Post");
         }
 
         /// <summary>
@@ -91,15 +109,15 @@ namespace Blog_Flo_Web.Controllers
         {
             if (string.IsNullOrEmpty(model.Title) || string.IsNullOrEmpty(model.Content))
             {
-                ModelState.AddModelError("", "Не все поля заполненны");
-				Logger.Error($"Пост не отредактирован, ошибка при редактировании - Не все поля заполнены");
-                
-				return View(model);
+                ModelState.AddModelError("", "Не все поля заполнены");
+                _logger.LogError("Пост не отредактирован, ошибка при редактировании - Не все поля заполнены");
+
+                return View(model);
             }
             await _postService.EditPost(model, Id);
-			Logger.Info($"Пост {model.Title} отредактирован");
+            _logger.LogInformation($"Пост {model.Title} отредактирован");
 
-			return RedirectToAction("GetPosts", "Post");
+            return RedirectToAction("GetPosts", "Post");
         }
 
         /// <summary>
@@ -124,29 +142,29 @@ namespace Blog_Flo_Web.Controllers
         public async Task<IActionResult> RemovePost(Guid id)
         {
             await _postService.RemovePost(id);
-			Logger.Info($"Пост с id {id} удален");
+            _logger.LogInformation($"Пост с id {id} удален");
 
-			return RedirectToAction("GetPosts", "Post");
+            return RedirectToAction("GetPosts", "Post");
         }
 
         /// <summary>
         /// [Get] Метод, получения всех постов
         /// </summary>
         [HttpGet]
-        [Route("Post/Get")]//GetAllPosts
+        [Route("Post/Get")]
         public async Task<IActionResult> GetPosts()
         {
             var posts = await _postService.GetPosts();
 
             return View(posts);
         }
+
         [HttpGet]
         [Route("Post/GetByAuthor/{authorId}")]
-        public async Task<IActionResult> GetPostsByAuthor(string authorId)//
+        public async Task<IActionResult> GetPostsByAuthor(string authorId)
         {
             var posts = await _postService.GetPostsByAuthor(authorId);
             return View(posts);
         }
     }
 }
-

@@ -4,21 +4,22 @@ using Microsoft.AspNetCore.Mvc;
 using Blog_Flo_Web.Services_model.Services.IServices;
 using Blog_Flo_Web.Services_model.ViewModels.Comments;
 using Blog_Flo_Web.Business_model.Models;
-using NLog;
+
 
 namespace Blog_Flo_Web.Controllers
 {
-	[ApiExplorerSettings(IgnoreApi = true)]
-	public class CommentController : Controller
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public class CommentController : Controller
     {
         private readonly ICommentService _commentService;
         private readonly UserManager<User> _userManager;
-		private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        private readonly ILogger<CommentController> _logger;
 
-		public CommentController(ICommentService commentService, UserManager<User> userManager)
+        public CommentController(ICommentService commentService, UserManager<User> userManager, ILogger<CommentController> logger)
         {
             _commentService = commentService;
             _userManager = userManager;
+            _logger = logger;
         }
 
         // <summary>
@@ -41,11 +42,28 @@ namespace Blog_Flo_Web.Controllers
         public async Task<IActionResult> CreateComment(CommentCreateViewModel model, Guid postId)
         {
             model.PostId = postId;
-            var user = await _userManager.FindByNameAsync(User?.Identity?.Name);
-            var post = _commentService.CreateComment(model, new Guid(user.Id));
-			Logger.Info($"Пользователь {model.Author} добавил комментарий к статье {postId}");
 
-			return RedirectToAction("GetPosts", "Post");
+            // Проверка имени пользователя
+            var userName = User?.Identity?.Name;
+            if (string.IsNullOrEmpty(userName))
+            {
+                _logger.LogWarning("Имя пользователя не найдено");
+                return RedirectToAction("Login", "Account"); // Перенаправление на страницу входа
+            }
+
+            // Поиск пользователя
+            var user = await _userManager.FindByNameAsync(userName);
+            if (user == null)
+            {
+                _logger.LogWarning($"Пользователь с именем {userName} не найден");
+                return NotFound("Пользователь не найден");
+            }
+
+            // Создание комментария
+            var post = _commentService.CreateComment(model, new Guid(user.Id));
+            _logger.LogInformation($"Пользователь {model.Author} добавил комментарий к статье {postId}");
+
+            return RedirectToAction("GetPosts", "Post");
         }
 
         /// <summary>
@@ -71,9 +89,9 @@ namespace Blog_Flo_Web.Controllers
             if (ModelState.IsValid)
             {
                 await _commentService.EditComment(model, model.Id);
-				Logger.Info($"Пользователь {model.Author} изменил комментарий {model.Id}");
+                _logger.LogInformation($"Пользователь {model.Author} изменил комментарий {model.Id}");
 
-				return RedirectToAction("GetPosts", "Post");
+                return RedirectToAction("GetPosts", "Post");
             }
             else
             {
@@ -105,24 +123,25 @@ namespace Blog_Flo_Web.Controllers
         public async Task<IActionResult> RemoveComment(Guid id)
         {
             await _commentService.RemoveComment(id);
-			Logger.Info($"Комментарий с id {id} удален");
+            _logger.LogInformation($"Комментарий с id {id} удален");
 
-			return RedirectToAction("GetPosts", "Post");
+            return RedirectToAction("GetPosts", "Post");
         }
+
         /// <summary>
         /// [Get] Метод, получения всех тегов
         /// </summary>
         [Route("Comment/Get")]
         [Authorize(Roles = "Администратор, Модератор")]
         [HttpGet]
-        public async Task<IActionResult> GetComments()//
+        public async Task<IActionResult> GetComments()
         {
             var comments = await _commentService.GetComments();
 
             return View(comments);
         }
 
-        public async Task<IActionResult> DetailsComment(Guid id)//
+        public async Task<IActionResult> DetailsComment(Guid id)
         {
             var comments = await _commentService.GetComment(id);
 

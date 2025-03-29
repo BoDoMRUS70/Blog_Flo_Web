@@ -1,6 +1,10 @@
 ﻿using Blog_Flo_Web.Business_model.Models;
 using Blog_Flo_Web.Business_model.Repositories.IRepositories;
-
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Blog_Flo_Web.Business_model.Repositories
 {
@@ -10,44 +14,63 @@ namespace Blog_Flo_Web.Business_model.Repositories
 
         public TagRepository(AppDbContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public HashSet<Tag> GetAllTags()
         {
-            return _context.Tags.ToHashSet();
+            return _context.Tags?.ToHashSet() ?? new HashSet<Tag>();
         }
 
-        public Tag GetTag(Guid id)
+        // Исправленная асинхронная версия метода
+        public async Task<IEnumerable<Tag>> GetAllTagsAsync()
         {
-            return _context.Tags.FirstOrDefault(t => t.Id == id);
+            if (_context.Tags == null)
+                return Enumerable.Empty<Tag>();
+
+            return await _context.Tags.ToListAsync();
+        }
+
+        public Tag? GetTag(Guid id)
+        {
+            return _context.Tags?.FirstOrDefault(t => t.Id == id);
         }
 
         public async Task AddTag(Tag tag)
         {
-            _context.Tags.Add(tag);
+            if (tag == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
+            _context.Tags?.Add(tag);
             await SaveChangesAsync();
         }
 
         public async Task UpdateTag(Tag tag)
         {
-            _context.Tags.Update(tag);
+            if (tag == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
+            _context.Tags?.Update(tag);
             await SaveChangesAsync();
         }
 
         public async Task RemoveTag(Guid id)
         {
-            _context.Tags.Remove(GetTag(id));
-            await SaveChangesAsync();
+            var tag = GetTag(id);
+            if (tag != null)
+            {
+                _context.Tags?.Remove(tag);
+                await SaveChangesAsync();
+            }
         }
 
         public async Task<bool> SaveChangesAsync()
         {
-            if (await _context.SaveChangesAsync() > 0)
-            {
-                return true;
-            }
-            return false;
+            return await _context.SaveChangesAsync() > 0;
         }
     }
 }

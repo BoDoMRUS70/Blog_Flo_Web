@@ -1,10 +1,14 @@
 ﻿using NUnit.Framework;
 using Moq;
-using AutoMapper;
 using Blog_Flo_Web.Business_model.Models;
 using Blog_Flo_Web.Services_model.Services;
 using Blog_Flo_Web.Services_model.ViewModels.Roles;
 using Microsoft.AspNetCore.Identity;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Blog_Flo_Web.Test
 {
@@ -34,6 +38,7 @@ namespace Blog_Flo_Web.Test
 
             // Assert
             _roleManagerMock.Verify(manager => manager.CreateAsync(It.IsAny<Role>()), Times.Once);
+            Assert.NotNull(roleId); // Проверка, что roleId не null
             Assert.AreEqual(Guid.Parse(role.Id), roleId);
         }
 
@@ -53,6 +58,7 @@ namespace Blog_Flo_Web.Test
             // Assert
             _roleManagerMock.Verify(manager => manager.FindByIdAsync(roleId.ToString()), Times.Once);
             _roleManagerMock.Verify(manager => manager.UpdateAsync(It.IsAny<Role>()), Times.Once);
+            Assert.NotNull(existingRole); // Проверка, что existingRole не null
             Assert.AreEqual(model.Name, existingRole.Name);
             Assert.AreEqual(model.Description, existingRole.Description);
         }
@@ -79,16 +85,17 @@ namespace Blog_Flo_Web.Test
         {
             // Arrange
             var roles = new List<Role>
-        {
-            new Role { Id = Guid.NewGuid().ToString(), Name = "Role1", Description = "Description1" },
-            new Role { Id = Guid.NewGuid().ToString(), Name = "Role2", Description = "Description2" }
-        };
+            {
+                new Role { Id = Guid.NewGuid().ToString(), Name = "Role1", Description = "Description1" },
+                new Role { Id = Guid.NewGuid().ToString(), Name = "Role2", Description = "Description2" }
+            };
             _roleManagerMock.Setup(manager => manager.Roles).Returns(roles.AsQueryable());
 
             // Act
             var resultRoles = await _roleService.GetRoles();
 
             // Assert
+            Assert.NotNull(resultRoles); // Проверка, что resultRoles не null
             Assert.AreEqual(roles.Count, resultRoles.Count);
             foreach (var role in roles)
             {
@@ -108,17 +115,24 @@ namespace Blog_Flo_Web.Test
             var resultRole = await _roleService.GetRole(roleId);
 
             // Assert
-            Assert.NotNull(resultRole);
+            Assert.NotNull(resultRole); // Проверка, что resultRole не null
+            Assert.NotNull(resultRole.Id); // Проверка, что resultRole.Id не null
             Assert.AreEqual(role.Id, resultRole.Id.ToString());
             Assert.AreEqual(role.Name, resultRole.Name);
             Assert.AreEqual(role.Description, resultRole.Description);
         }
-        //This part of the code is a helper method that creates a mock instance of RoleManager<Role> for testing purposes.
+
+        // Helper method to create a mock RoleManager<Role>
         private Mock<RoleManager<Role>> GetRoleManagerMock()
         {
-            // Set up a mock RoleManager
             var storeMock = new Mock<IRoleStore<Role>>();
-            return new Mock<RoleManager<Role>>(storeMock.Object, null, null, null, null);
+            return new Mock<RoleManager<Role>>(
+                storeMock.Object,
+                Mock.Of<IEnumerable<IRoleValidator<Role>>>(),
+                Mock.Of<ILookupNormalizer>(),
+                Mock.Of<IdentityErrorDescriber>(),
+                Mock.Of<ILogger<RoleManager<Role>>>()
+            );
         }
     }
 }

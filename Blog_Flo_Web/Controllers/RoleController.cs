@@ -1,24 +1,25 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NLog;
+using Microsoft.Extensions.Logging;
 using Blog_Flo_Web.Services_model.Services.IServices;
 using Blog_Flo_Web.Services_model.ViewModels.Roles;
 
 namespace Blog_Flo_Web.Controllers
 {
-	[ApiExplorerSettings(IgnoreApi = true)]
-	public class RoleController : Controller
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public class RoleController : Controller
     {
         private readonly IRoleService _roleService;
-		private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        private readonly ILogger<RoleController> _logger;
 
-		public RoleController(IRoleService roleService)
+        public RoleController(IRoleService roleService, ILogger<RoleController> logger)
         {
             _roleService = roleService;
+            _logger = logger;
         }
 
         /// <summary>
-        /// [Get] Метод, создания тега
+        /// [Get] Метод, создания роли
         /// </summary>
         [Route("Role/Create")]
         [Authorize(Roles = "Администратор, Модератор")]
@@ -29,7 +30,7 @@ namespace Blog_Flo_Web.Controllers
         }
 
         /// <summary>
-        /// [Post] Метод, создания тега
+        /// [Post] Метод, создания роли
         /// </summary>
         [Route("Role/Create")]
         [Authorize(Roles = "Администратор, Модератор")]
@@ -39,35 +40,35 @@ namespace Blog_Flo_Web.Controllers
             if (ModelState.IsValid)
             {
                 var roleId = await _roleService.CreateRole(model);
-				Logger.Info($"Созданна роль - {model.Name}");
+                _logger.LogInformation($"Создана роль - {model.Name}");
 
-				return RedirectToAction("GetRoles", "Role");
+                return RedirectToAction("GetRoles", "Role");
             }
             else
             {
                 ModelState.AddModelError("", "Некорректные данные");
-				Logger.Error($"Роль {model.Name} не создана, ошибка при создании - Некорректные данные");
+                _logger.LogError($"Роль {model.Name} не создана, ошибка при создании - Некорректные данные");
 
-				return View(model);
+                return View(model);
             }
         }
 
         /// <summary>
-        /// [Get] Метод, редактирования тега
+        /// [Get] Метод, редактирования роли
         /// </summary>
         [Route("Role/Edit")]
         [Authorize(Roles = "Администратор, Модератор")]
         [HttpGet]
         public async Task<IActionResult> EditRole(Guid id)
         {
-            var role = _roleService.GetRole(id);
-            var view = new RoleEditViewModel { Id = id, Description = role.Result?.Description, Name = role.Result?.Name };
+            var role = await _roleService.GetRole(id);
+            var view = new RoleEditViewModel { Id = id, Description = role?.Description, Name = role?.Name };
 
             return View(view);
         }
 
         /// <summary>
-        /// [Post] Метод, редактирования тега
+        /// [Post] Метод, редактирования роли
         /// </summary>
         [Route("Role/Edit")]
         [Authorize(Roles = "Администратор, Модератор")]
@@ -77,21 +78,21 @@ namespace Blog_Flo_Web.Controllers
             if (ModelState.IsValid)
             {
                 await _roleService.EditRole(model);
-				Logger.Info($"Измененна роль - {model.Name}");
+                _logger.LogInformation($"Изменена роль - {model.Name}");
 
-				return RedirectToAction("GetRoles", "Role");
+                return RedirectToAction("GetRoles", "Role");
             }
             else
             {
                 ModelState.AddModelError("", "Некорректные данные");
-				Logger.Error($"Роль {model.Name} не изменена, ошибка при изменении - Некорректные данные");
+                _logger.LogError($"Роль {model.Name} не изменена, ошибка при изменении - Некорректные данные");
 
-				return View(model);
+                return View(model);
             }
         }
 
         /// <summary>
-        /// [Get] Метод, удаления тега
+        /// [Get] Метод, удаления роли
         /// </summary>
         [Route("Role/Remove")]
         [Authorize(Roles = "Администратор, Модератор")]
@@ -105,7 +106,7 @@ namespace Blog_Flo_Web.Controllers
         }
 
         /// <summary>
-        /// [Post] Метод, удаления тега
+        /// [Post] Метод, удаления роли
         /// </summary>
         [Route("Role/Remove")]
         [Authorize(Roles = "Администратор, Модератор")]
@@ -113,13 +114,13 @@ namespace Blog_Flo_Web.Controllers
         public async Task<IActionResult> RemoveRole(Guid id)
         {
             await _roleService.RemoveRole(id);
-			Logger.Info($"Удаленна роль - {id}");
+            _logger.LogInformation($"Удалена роль - {id}");
 
-			return RedirectToAction("GetRoles", "Role");
+            return RedirectToAction("GetRoles", "Role");
         }
 
         /// <summary>
-        /// [Get] Метод, получения всех тегов
+        /// [Get] Метод, получения всех ролей
         /// </summary>
         [Route("Role/GetRoles")]
         [HttpGet]

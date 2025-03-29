@@ -10,49 +10,59 @@ namespace Blog_Flo_Web.Business_model.Repositories
 
         public CommentRepository(AppDbContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public List<Comment> GetAllComments()
         {
-            return _context.Comments.ToList();
+            return _context.Comments?.ToList() ?? new List<Comment>();
         }
 
-        public Comment GetComment(Guid id)
+        public Comment? GetComment(Guid id)
         {
-            return _context.Comments.FirstOrDefault(c => c.Id == id);
+            return _context.Comments?.FirstOrDefault(c => c.Id == id);
         }
 
         public List<Comment> GetCommentsByPostId(Guid id)
         {
-            return _context.Comments.Where(c => c.PostId == id).ToList();
+            return _context.Comments?.Where(c => c.PostId == id).ToList() ?? new List<Comment>();
         }
 
         public async Task AddComment(Comment comment)
         {
-            _context.Comments.Add(comment);
+            if (comment == null)
+            {
+                throw new ArgumentNullException(nameof(comment));
+            }
+
+            _context.Comments?.Add(comment);
             await SaveChangesAsync();
         }
 
         public async Task UpdateComment(Comment comment)
         {
-            _context.Comments.Update(comment);
+            if (comment == null)
+            {
+                throw new ArgumentNullException(nameof(comment));
+            }
+
+            _context.Comments?.Update(comment);
             await SaveChangesAsync();
         }
 
         public async Task RemoveComment(Guid id)
         {
-            _context.Comments.Remove(GetComment(id));
-            await SaveChangesAsync();
+            var comment = GetComment(id);
+            if (comment != null)
+            {
+                _context.Comments?.Remove(comment);
+                await SaveChangesAsync();
+            }
         }
 
         public async Task<bool> SaveChangesAsync()
         {
-            if (await _context.SaveChangesAsync() > 0)
-            {
-                return true;
-            }
-            return false;
+            return await _context.SaveChangesAsync() > 0;
         }
     }
 }

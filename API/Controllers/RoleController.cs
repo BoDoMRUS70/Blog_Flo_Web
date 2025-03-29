@@ -7,14 +7,16 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("[Controller]")]
-    public class RoleController : Controller
+    [Route("api/[controller]")]
+    public class RoleController : ControllerBase
     {
         private readonly IRoleService _roleService;
+        private readonly ILogger<RoleController> _logger;
 
-        public RoleController(IRoleService roleService)
+        public RoleController(IRoleService roleService, ILogger<RoleController> logger)
         {
-            _roleService = roleService;
+            _roleService = roleService ?? throw new ArgumentNullException(nameof(roleService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -24,20 +26,29 @@ namespace API.Controllers
         /// Для получения всех ролей необходимы права администратора
         /// </remarks>
         [Authorize(Roles = "Администратор")]
-        [HttpGet]
-        [Route("GetRoles")]
-        public async Task<IEnumerable<Role>> GetRoles()
+        [HttpGet("GetRoles")]
+        public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
         {
-            var roles = await _roleService.GetRoles();
+            _logger.LogInformation("Запрос на получение всех ролей.");
 
-            return roles;
+            try
+            {
+                var roles = await _roleService.GetRoles();
+
+                _logger.LogInformation("Успешно получены все роли.");
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при получении всех ролей.");
+                return StatusCode(500, "Произошла ошибка при обработке запроса.");
+            }
         }
 
         /// <summary>
         /// Добавление роли
         /// </summary>
         /// <remarks>
-        /// 
         /// Для добавления роли необходимы права администратора
         /// 
         /// Пример запроса:
@@ -50,13 +61,29 @@ namespace API.Controllers
         ///
         /// </remarks>
         [Authorize(Roles = "Администратор")]
-        [HttpPost]
-        [Route("AddRole")]
-        public async Task<IActionResult> AddRole(RoleCreateViewModel model)
+        [HttpPost("AddRole")]
+        public async Task<IActionResult> AddRole([FromBody] RoleCreateViewModel model)
         {
-            await _roleService.CreateRole(model);
+            _logger.LogInformation("Запрос на добавление новой роли.");
 
-            return StatusCode(201);
+            if (model == null)
+            {
+                _logger.LogWarning("Модель роли не может быть null.");
+                return BadRequest("Модель роли не может быть null.");
+            }
+
+            try
+            {
+                await _roleService.CreateRole(model);
+
+                _logger.LogInformation("Роль успешно добавлена.");
+                return StatusCode(201, "Роль успешно добавлена.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при добавлении роли.");
+                return StatusCode(500, "Произошла ошибка при добавлении роли.");
+            }
         }
 
         /// <summary>
@@ -66,13 +93,29 @@ namespace API.Controllers
         /// Для редактирования роли необходимы права администратора
         /// </remarks>
         [Authorize(Roles = "Администратор")]
-        [HttpPatch]
-        [Route("EditRole")]
-        public async Task<IActionResult> EditRole(RoleEditViewModel model)
+        [HttpPatch("EditRole")]
+        public async Task<IActionResult> EditRole([FromBody] RoleEditViewModel model)
         {
-            await _roleService.EditRole(model);
+            _logger.LogInformation("Запрос на редактирование роли с ID: {RoleId}", model?.Id);
 
-            return StatusCode(201);
+            if (model == null)
+            {
+                _logger.LogWarning("Модель роли не может быть null.");
+                return BadRequest("Модель роли не может быть null.");
+            }
+
+            try
+            {
+                await _roleService.EditRole(model);
+
+                _logger.LogInformation("Роль с ID: {RoleId} успешно отредактирована.", model.Id);
+                return StatusCode(201, "Роль успешно отредактирована.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при редактировании роли с ID: {RoleId}", model.Id);
+                return StatusCode(500, "Произошла ошибка при редактировании роли.");
+            }
         }
 
         /// <summary>
@@ -82,13 +125,23 @@ namespace API.Controllers
         /// Для удаления роли необходимы права администратора
         /// </remarks>
         [Authorize(Roles = "Администратор")]
-        [HttpDelete]
-        [Route("RemoveRole")]
+        [HttpDelete("RemoveRole/{id}")]
         public async Task<IActionResult> RemoveRole(Guid id)
         {
-            await _roleService.RemoveRole(id);
+            _logger.LogInformation("Запрос на удаление роли с ID: {RoleId}", id);
 
-            return StatusCode(201);
+            try
+            {
+                await _roleService.RemoveRole(id);
+
+                _logger.LogInformation("Роль с ID: {RoleId} успешно удалена.", id);
+                return StatusCode(201, "Роль успешно удалена.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при удалении роли с ID: {RoleId}", id);
+                return StatusCode(500, "Произошла ошибка при удалении роли.");
+            }
         }
     }
 }

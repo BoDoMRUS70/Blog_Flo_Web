@@ -1,5 +1,4 @@
-﻿using NUnit.Framework;
-using Moq;
+﻿using Moq;
 using AutoMapper;
 using Blog_Flo_Web.Business_model.Models;
 using Blog_Flo_Web.Services_model.Services;
@@ -7,6 +6,10 @@ using Blog_Flo_Web.Services_model.ViewModels.Users;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication;
+
 
 namespace Blog_Flo_Web.Test
 {
@@ -19,27 +22,64 @@ namespace Blog_Flo_Web.Test
         private Mock<IMapper> _mapperMock;
         private UserService _userService;
 
+        public UserServiceTests()
+        {
+            _userManagerMock = GetMockUserManager();
+            _signInManagerMock = GetMockSignInManager();
+            _roleManagerMock = new Mock<RoleManager<Role>>(
+                Mock.Of<IRoleStore<Role>>(),
+                Mock.Of<IEnumerable<IRoleValidator<Role>>>(),
+                Mock.Of<ILookupNormalizer>(),
+                Mock.Of<IdentityErrorDescriber>(),
+                Mock.Of<ILogger<RoleManager<Role>>>()
+            );
+            _mapperMock = new Mock<IMapper>();
+            _userService = new UserService(_userManagerMock.Object, _signInManagerMock.Object, _roleManagerMock.Object, _mapperMock.Object);
+        }
+
         [SetUp]
         public void SetUp()
         {
             _userManagerMock = GetMockUserManager();
             _signInManagerMock = GetMockSignInManager();
-            _roleManagerMock = new Mock<RoleManager<Role>>(Mock.Of<IRoleStore<Role>>(), null, null, null, null);
+            _roleManagerMock = new Mock<RoleManager<Role>>(
+                Mock.Of<IRoleStore<Role>>(),
+                Mock.Of<IEnumerable<IRoleValidator<Role>>>(),
+                Mock.Of<ILookupNormalizer>(),
+                Mock.Of<IdentityErrorDescriber>(),
+                Mock.Of<ILogger<RoleManager<Role>>>()
+            );
             _mapperMock = new Mock<IMapper>();
             _userService = new UserService(_userManagerMock.Object, _signInManagerMock.Object, _roleManagerMock.Object, _mapperMock.Object);
         }
+
         private Mock<SignInManager<User>> GetMockSignInManager()
         {
             return new Mock<SignInManager<User>>(
                 _userManagerMock.Object,
                 Mock.Of<IHttpContextAccessor>(),
                 Mock.Of<IUserClaimsPrincipalFactory<User>>(),
-                null, null, null, null);
+                Mock.Of<IOptions<IdentityOptions>>(), // Используем макет вместо null
+                Mock.Of<ILogger<SignInManager<User>>>(),
+                Mock.Of<IAuthenticationSchemeProvider>(),
+                Mock.Of<IUserConfirmation<User>>()
+            );
         }
+
         private Mock<UserManager<User>> GetMockUserManager()
         {
             var storeMock = new Mock<IUserStore<User>>();
-            return new Mock<UserManager<User>>(storeMock.Object, null, null, null, null, null, null, null, null);
+            return new Mock<UserManager<User>>(
+                storeMock.Object,
+                Mock.Of<IOptions<IdentityOptions>>(), // Используем макет вместо null
+                Mock.Of<IPasswordHasher<User>>(),
+                new List<IUserValidator<User>>(),
+                new List<IPasswordValidator<User>>(),
+                Mock.Of<ILookupNormalizer>(),
+                Mock.Of<IdentityErrorDescriber>(),
+                Mock.Of<IServiceProvider>(),
+                Mock.Of<ILogger<UserManager<User>>>()
+            );
         }
 
         [Test]
@@ -90,6 +130,7 @@ namespace Blog_Flo_Web.Test
             _userManagerMock.Verify(manager => manager.FindByEmailAsync(model.Email), Times.Once);
             _signInManagerMock.Verify(manager => manager.PasswordSignInAsync(user, model.Password, true, false), Times.Once);
         }
+
         [Test]
         public async Task RemoveAccount_Should_RemoveUserSuccessfully()
         {
@@ -106,6 +147,7 @@ namespace Blog_Flo_Web.Test
             _userManagerMock.Verify(um => um.FindByIdAsync(userId.ToString()), Times.Once);
             _userManagerMock.Verify(um => um.DeleteAsync(user), Times.Once);
         }
+
         [Test]
         public async Task GetAccounts_Should_ReturnListOfUsersWithRoles()
         {
@@ -137,6 +179,7 @@ namespace Blog_Flo_Web.Test
             Assert.AreEqual(1, result[1].Roles.Count);
             Assert.AreEqual(role2, result[1].Roles[0].Name);
         }
+
         [Test]
         public async Task GetAccount_Should_CallFindByIdAsync()
         {
@@ -153,6 +196,7 @@ namespace Blog_Flo_Web.Test
             Assert.AreEqual(userMock.Object, user);
             _userManagerMock.Verify(um => um.FindByIdAsync(userId.ToString()), Times.Once);
         }
+
         [Test]
         public async Task LogoutAccount_Should_CallSignOutAsync()
         {
@@ -162,6 +206,7 @@ namespace Blog_Flo_Web.Test
             // Assert
             _signInManagerMock.Verify(manager => manager.SignOutAsync(), Times.Once);
         }
+
         [Test]
         public async Task CreateUser_Should_CallCreateAsyncAndAddToRoleAsync()
         {

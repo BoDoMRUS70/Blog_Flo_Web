@@ -1,4 +1,4 @@
-﻿using Blog_Flo_Web.Services_model.ViewModels.Roles;
+﻿using Blog_Flo_Web.Services_model.ViewModels.Roles; // Добавьте эту директиву
 using System.ComponentModel.DataAnnotations;
 
 namespace Blog_Flo_Web.Services_model.ViewModels.Users
@@ -26,7 +26,7 @@ namespace Blog_Flo_Web.Services_model.ViewModels.Users
         public string? NewPassword { get; set; }
 
         [Display(Name = "Роли")]
-        public List<CommentViewModel>? Roles { get; set; }
+        public List<RoleViewModel>? Roles { get; set; } // Заменили CommentViewModel на RoleViewModel
 
         public Guid Id { get; set; }
     }

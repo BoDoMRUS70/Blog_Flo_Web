@@ -1,20 +1,21 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NLog;
+using Microsoft.Extensions.Logging;
 using Blog_Flo_Web.Services_model.Services.IServices;
 using Blog_Flo_Web.Services_model.ViewModels.Tags;
 
 namespace Blog_Flo_Web.Controllers
 {
-	[ApiExplorerSettings(IgnoreApi = true)]
-	public class TagController : Controller
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public class TagController : Controller
     {
         private readonly ITagService _tagService;
-		private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-		
-        public TagController(ITagService tagService)
+        private readonly ILogger<TagController> _logger;
+
+        public TagController(ITagService tagService, ILogger<TagController> logger)
         {
             _tagService = tagService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -38,16 +39,16 @@ namespace Blog_Flo_Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var tagId = _tagService.CreateTag(model);
-				Logger.Info($"Создан тег - {model.Name}");
+                var tagId = await _tagService.CreateTag(model);
+                _logger.LogInformation($"Создан тег - {model.Name}");
 
-				return RedirectToAction("GetTags", "Tag");
+                return RedirectToAction("GetTags", "Tag");
             }
             else
             {
-				Logger.Error($"Ошибка при создании тега - {model.Name}");
+                _logger.LogError($"Ошибка при создании тега - {model.Name}");
 
-				return View(model);
+                return View(model);
             }
         }
 
@@ -75,15 +76,15 @@ namespace Blog_Flo_Web.Controllers
             if (ModelState.IsValid)
             {
                 await _tagService.EditTag(model, id);
-				Logger.Info($"Изменен тег - {model.Name}");
+                _logger.LogInformation($"Изменен тег - {model.Name}");
 
-				return RedirectToAction("GetTags", "Tag");
+                return RedirectToAction("GetTags", "Tag");
             }
             else
             {
-				Logger.Error($"Ошибка при изменении тега - {model.Name}");
+                _logger.LogError($"Ошибка при изменении тега - {model.Name}");
 
-				return View(model);
+                return View(model);
             }
         }
 
@@ -111,9 +112,9 @@ namespace Blog_Flo_Web.Controllers
         {
             var tag = await _tagService.GetTag(id);
             await _tagService.RemoveTag(id);
-			Logger.Info($"Удаленн тег - {id}");
+            _logger.LogInformation($"Удален тег - {id}");
 
-			return RedirectToAction("GetTags", "Tag");
+            return RedirectToAction("GetTags", "Tag");
         }
 
         /// <summary>
@@ -129,13 +130,13 @@ namespace Blog_Flo_Web.Controllers
             return View(tags);
         }
 
-		/// <summary>
-		/// [Get] Метод, просмотра данных о теге
-		/// </summary>
-		[Route("Tag/Details")]
-		[Authorize(Roles = "Администратор, Модератор")]
-		[HttpGet]
-		public async Task<IActionResult> DetailsTag(Guid id)
+        /// <summary>
+        /// [Get] Метод, просмотра данных о теге
+        /// </summary>
+        [Route("Tag/Details")]
+        [Authorize(Roles = "Администратор, Модератор")]
+        [HttpGet]
+        public async Task<IActionResult> DetailsTag(Guid id)
         {
             var tags = await _tagService.GetTag(id);
 

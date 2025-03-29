@@ -1,20 +1,21 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NLog;
+using Microsoft.Extensions.Logging;
 using Blog_Flo_Web.Services_model.Services.IServices;
 using Blog_Flo_Web.Services_model.ViewModels.Users;
 
 namespace Blog_Flo_Web.Controllers
 {
-	[ApiExplorerSettings(IgnoreApi = true)]
-	public class UserController : Controller
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public class UserController : Controller
     {
         private readonly IUserService _userService;
-		private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        private readonly ILogger<UserController> _logger;
 
-		public UserController(IUserService userService)
+        public UserController(IUserService userService, ILogger<UserController> logger)
         {
             _userService = userService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -41,10 +42,9 @@ namespace Blog_Flo_Web.Controllers
 
                 if (result.Succeeded)
                 {
-					Logger.Info($"Осуществлен вход пользователя с адресом - {model.Email}");
-					return RedirectToAction("Index", "Home");
+                    _logger.LogInformation($"Осуществлен вход пользователя с адресом - {model.Email}");
+                    return RedirectToAction("Index", "Home");
                 }
-
                 else
                 {
                     ModelState.AddModelError("", "Неправильный логин и (или) пароль");
@@ -76,8 +76,8 @@ namespace Blog_Flo_Web.Controllers
 
                 if (result.Succeeded)
                 {
-					Logger.Info($"Создан аккаунт, пользователем с правами администратора, с использованием адреса - {model.Email}");
-					return RedirectToAction("GetAccounts", "User");
+                    _logger.LogInformation($"Создан аккаунт, пользователем с правами администратора, с использованием адреса - {model.Email}");
+                    return RedirectToAction("GetAccounts", "User");
                 }
                 else
                 {
@@ -113,8 +113,8 @@ namespace Blog_Flo_Web.Controllers
 
                 if (result.Succeeded)
                 {
-					Logger.Info($"Создан аккаунт с использованием адреса - {model.Email}");
-					return RedirectToAction("Index", "Home");
+                    _logger.LogInformation($"Создан аккаунт с использованием адреса - {model.Email}");
+                    return RedirectToAction("Index", "Home");
                 }
                 else
                 {
@@ -151,11 +151,10 @@ namespace Blog_Flo_Web.Controllers
             if (ModelState.IsValid)
             {
                 await _userService.EditAccount(model);
-				Logger.Info($"Аккаунт {model.UserName} был изменен");
+                _logger.LogInformation($"Аккаунт {model.UserName} был изменен");
 
-				return RedirectToAction("GetAccounts", "User");
+                return RedirectToAction("GetAccounts", "User");
             }
-
             else
             {
                 return View(model);
@@ -171,7 +170,6 @@ namespace Blog_Flo_Web.Controllers
         public async Task<IActionResult> RemoveAccount(Guid id, bool confirm = true)
         {
             if (confirm)
-
                 await RemoveAccount(id);
 
             return RedirectToAction("GetAccounts", "User");
@@ -187,9 +185,9 @@ namespace Blog_Flo_Web.Controllers
         {
             var account = await _userService.GetAccount(id);
             await _userService.RemoveAccount(id);
-			Logger.Info($"Аккаунт с id - {id} удален");
+            _logger.LogInformation($"Аккаунт с id - {id} удален");
 
-			return RedirectToAction("GetAccounts", "User");
+            return RedirectToAction("GetAccounts", "User");
         }
 
         /// <summary>
@@ -201,9 +199,9 @@ namespace Blog_Flo_Web.Controllers
         public async Task<IActionResult> LogoutAccount()
         {
             await _userService.LogoutAccount();
-			Logger.Info($"Осуществлен выход из аккаунта");
+            _logger.LogInformation($"Осуществлен выход из аккаунта");
 
-			return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Home");
         }
 
         /// <summary>
