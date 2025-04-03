@@ -4,20 +4,17 @@ using Blog_Flo_Web.Services_model.ViewModels.Tags;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    public class TagController : ControllerBase
+    [Route("[controller]")]
+    public class TagController : Controller
     {
-        private readonly ITagService _tagService;
-        private readonly ILogger<TagController> _logger;
+        private readonly ITagService _tagSerive;
 
-        public TagController(ITagService tagService, ILogger<TagController> logger)
+        public TagController(ITagService tagService)
         {
-            _tagService = tagService ?? throw new ArgumentNullException(nameof(tagService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _tagSerive = tagService;
         }
 
         /// <summary>
@@ -27,29 +24,20 @@ namespace API.Controllers
         /// Для получения всех тегов необходимы права администратора
         /// </remarks>
         [Authorize(Roles = "Администратор")]
-        [HttpGet("GetTags")]
-        public async Task<ActionResult<List<Tag>>> GetTags()
+        [HttpGet]
+        [Route("GetTags")]
+        public async Task<List<Tag>> GetTags()
         {
-            _logger.LogInformation("Запрос на получение всех тегов.");
+            var tags = await _tagSerive.GetTags();
 
-            try
-            {
-                var tags = await _tagService.GetTags();
-
-                _logger.LogInformation("Успешно получены все теги.");
-                return Ok(tags);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка при получении всех тегов.");
-                return StatusCode(500, "Произошла ошибка при обработке запроса.");
-            }
+            return tags;
         }
 
         /// <summary>
         /// Добавление тега
         /// </summary>
         /// <remarks>
+        ///
         /// Для добавления тега необходимы права администратора
         /// 
         /// Пример запроса:
@@ -61,37 +49,13 @@ namespace API.Controllers
         ///
         /// </remarks>
         [Authorize(Roles = "Администратор")]
-        [HttpPost("AddTag")]
-        public async Task<IActionResult> AddTag([FromBody] TagCreateViewModel model)
+        [HttpPost]
+        [Route("AddTag")]
+        public async Task<IActionResult> AddTag(TagCreateViewModel model)
         {
-            _logger.LogInformation("Запрос на добавление нового тега.");
+            var result = await _tagSerive.CreateTag(model);
 
-            if (model == null)
-            {
-                _logger.LogWarning("Модель тега не может быть null.");
-                return BadRequest("Модель тега не может быть null.");
-            }
-
-            try
-            {
-                var tagId = await _tagService.CreateTag(model);
-
-                if (tagId != Guid.Empty)
-                {
-                    _logger.LogInformation("Тег успешно добавлен с ID: {TagId}", tagId);
-                    return StatusCode(201, new { TagId = tagId, Message = "Тег успешно добавлен." });
-                }
-                else
-                {
-                    _logger.LogWarning("Не удалось добавить тег.");
-                    return StatusCode(400, "Не удалось добавить тег.");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка при добавлении тега.");
-                return StatusCode(500, "Произошла ошибка при добавлении тега.");
-            }
+            return StatusCode(201);
         }
 
         /// <summary>
@@ -101,29 +65,13 @@ namespace API.Controllers
         /// Для редактирования тега необходимы права администратора
         /// </remarks>
         [Authorize(Roles = "Администратор")]
-        [HttpPatch("EditTag")]
-        public async Task<IActionResult> EditTag([FromBody] TagEditViewModel model)
+        [HttpPatch]
+        [Route("EditTag")]
+        public async Task<IActionResult> EditTag(TagEditViewModel model)
         {
-            _logger.LogInformation("Запрос на редактирование тега с ID: {TagId}", model?.Id);
+            await _tagSerive.EditTag(model, model.Id);
 
-            if (model == null)
-            {
-                _logger.LogWarning("Модель тега не может быть null.");
-                return BadRequest("Модель тега не может быть null.");
-            }
-
-            try
-            {
-                await _tagService.EditTag(model, model.Id);
-
-                _logger.LogInformation("Тег с ID: {TagId} успешно отредактирован.", model.Id);
-                return StatusCode(201, "Тег успешно отредактирован.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка при редактировании тега с ID: {TagId}", model.Id);
-                return StatusCode(500, "Произошла ошибка при редактировании тега.");
-            }
+            return StatusCode(201);
         }
 
         /// <summary>
@@ -133,23 +81,13 @@ namespace API.Controllers
         /// Для удаления тега необходимы права администратора
         /// </remarks>
         [Authorize(Roles = "Администратор")]
-        [HttpDelete("RemoveTag/{id}")]
+        [HttpDelete]
+        [Route("RemoveTag")]
         public async Task<IActionResult> RemoveTag(Guid id)
         {
-            _logger.LogInformation("Запрос на удаление тега с ID: {TagId}", id);
+            await _tagSerive.RemoveTag(id);
 
-            try
-            {
-                await _tagService.RemoveTag(id);
-
-                _logger.LogInformation("Тег с ID: {TagId} успешно удален.", id);
-                return StatusCode(201, "Тег успешно удален.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка при удалении тега с ID: {TagId}", id);
-                return StatusCode(500, "Произошла ошибка при удалении тега.");
-            }
+            return StatusCode(201);
         }
     }
 }
